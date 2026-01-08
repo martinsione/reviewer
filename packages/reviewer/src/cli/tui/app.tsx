@@ -42,6 +42,14 @@ export function App({ onExit }: AppProps) {
       git.actions.selectHunk(git.state.selectedHunkIndex + 1)
     } else if (keybind.match("prevHunk", key)) {
       git.actions.selectHunk(git.state.selectedHunkIndex - 1)
+    } else if (keybind.match("scrollDown", key)) {
+      git.actions.selectHunk(git.state.selectedHunkIndex + 5)
+    } else if (keybind.match("scrollUp", key)) {
+      git.actions.selectHunk(git.state.selectedHunkIndex - 5)
+    } else if (keybind.match("firstHunk", key)) {
+      git.actions.selectHunk(0)
+    } else if (keybind.match("lastHunk", key)) {
+      git.actions.selectHunk(git.computed.totalHunks - 1)
     }
 
     // Actions

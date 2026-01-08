@@ -8,6 +8,10 @@ export interface KeybindConfig {
   prevFile: string[]
   nextHunk: string[]
   prevHunk: string[]
+  scrollDown: string[]
+  scrollUp: string[]
+  firstHunk: string[]
+  lastHunk: string[]
 
   // Actions
   stageHunk: string[]
@@ -30,6 +34,10 @@ const DEFAULT_KEYBINDS: KeybindConfig = {
   prevFile: ["k", "up"],
   nextHunk: ["n", "tab"],
   prevHunk: ["p", "shift+tab"],
+  scrollDown: ["ctrl+d", "pagedown"],
+  scrollUp: ["ctrl+u", "pageup"],
+  firstHunk: ["g"],
+  lastHunk: ["shift+g"],
 
   // Actions
   stageHunk: ["s"],

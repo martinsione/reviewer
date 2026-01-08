@@ -13,18 +13,18 @@ export function HelpModal({ visible }: HelpModalProps) {
   if (!visible) return null
 
   const helpText = `Navigation:
-  ${keybind.print("prevFile")}/${keybind.print("nextFile")}     Navigate files
-  ${keybind.print("prevHunk")}/${keybind.print("nextHunk")}     Navigate hunks
+  ${keybind.print("prevFile")}/${keybind.print("nextFile")}       Navigate files
+  ${keybind.print("prevHunk")}/${keybind.print("nextHunk")}       Navigate hunks
+  ${keybind.print("scrollUp")}/${keybind.print("scrollDown")}   Scroll hunks (5)
+  ${keybind.print("firstHunk")}/${keybind.print("lastHunk")}     First/last hunk
 
 Actions:
-  ${keybind.print("toggleStage")}       Stage current hunk
-  ${keybind.print("stageHunk")}         Stage current hunk
-  ${keybind.print("unstageHunk")}         Unstage current hunk
+  ${keybind.print("toggleStage")}         Stage current hunk
+  ${keybind.print("unstageHunk")}           Unstage current hunk
 
 Other:
-  ${keybind.print("toggleView")}         Toggle view mode
-  ${keybind.print("help")}         Toggle this help
-  ${keybind.print("quit")}         Quit`
+  ${keybind.print("help")}           Toggle this help
+  ${keybind.print("quit")}           Quit`
 
   return (
     <box
