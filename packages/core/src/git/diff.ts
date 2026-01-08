@@ -8,7 +8,7 @@ export async function getDiff(options: DiffOptions = {}): Promise<FileDiff[]> {
   if (options.staged) args.push("--cached")
   if (options.path) args.push("--", options.path)
 
-  const result = await Bun.$`git ${args}`.text().catch(() => "")
+  const result = await Bun.$`git ${args}`.quiet().text().catch(() => "")
   if (!result.trim()) return []
 
   return parseDiff(result, options.staged ?? false)
@@ -51,7 +51,7 @@ export async function getAllDiffs(options: GetAllDiffsOptions = {}): Promise<Fil
 
 /** Get untracked files and generate diff-like content for them */
 async function getUntrackedFiles(): Promise<FileDiff[]> {
-  const result = await Bun.$`git ls-files --others --exclude-standard`.text().catch(() => "")
+  const result = await Bun.$`git ls-files --others --exclude-standard`.quiet().text().catch(() => "")
   if (!result.trim()) return []
 
   const files = result.trim().split("\n").filter(Boolean)

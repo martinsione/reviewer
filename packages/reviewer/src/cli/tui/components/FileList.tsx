@@ -16,7 +16,7 @@ export function FileList({ width }: FileListProps) {
           width,
           border: ["right"],
           borderColor: theme.border,
-          padding: 1,
+          paddingLeft: 1,
         }}
       >
         <text style={{ fg: theme.muted }} content="Loading..." />
@@ -31,7 +31,7 @@ export function FileList({ width }: FileListProps) {
           width,
           border: ["right"],
           borderColor: theme.border,
-          padding: 1,
+          paddingLeft: 1,
         }}
       >
         <text style={{ fg: theme.muted }} content="No changes" />
@@ -48,17 +48,7 @@ export function FileList({ width }: FileListProps) {
         flexDirection: "column",
       }}
     >
-      <box
-        style={{
-          height: 1,
-          paddingLeft: 1,
-          border: ["bottom"],
-          borderColor: theme.border,
-        }}
-      >
-        <text style={{ fg: theme.muted }} content="Files" />
-      </box>
-      <box style={{ flexDirection: "column", padding: 1 }}>
+      <box style={{ flexDirection: "column", paddingLeft: 1 }}>
         {state.files.map((file, index) => {
           const isSelected = index === state.selectedFileIndex
           const statusIcon =

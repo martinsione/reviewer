@@ -1,42 +1,37 @@
 import { useGit } from "../context/git"
 import { useTheme } from "../context/theme"
-import { useKeybind } from "../context/keybind"
 
 export function StatusBar() {
   const { theme } = useTheme()
-  const { state } = useGit()
-  const keybind = useKeybind()
+  const { state, computed } = useGit()
 
-  const keybinds = [
-    `${keybind.print("prevFile")}/${keybind.print("nextFile")} nav`,
-    `${keybind.print("toggleStage")} stage`,
-    `${keybind.print("toggleUntracked")} untracked`,
-    `${keybind.print("quit")} quit`,
-    `${keybind.print("help")} help`,
-  ].join("  ")
+  const branch = state.branch || "unknown"
 
-  const fileCount = `${state.files.length} file${state.files.length !== 1 ? "s" : ""}`
-  const modeIndicator = state.showUntracked ? "[+untracked]" : ""
+  const fileInfo = computed.currentFile
+    ? `${computed.currentFile.path} (${computed.currentFile.status})`
+    : "No changes"
+
+  const hunkInfo = computed.currentFile
+    ? `${state.selectedHunkIndex + 1}/${computed.totalHunks}`
+    : ""
 
   return (
     <box
       style={{
         height: 1,
-        border: ["top"],
-        borderColor: theme.border,
         paddingLeft: 1,
         paddingRight: 1,
         flexDirection: "row",
         justifyContent: "space-between",
         alignItems: "center",
-        backgroundColor: theme.background,
+        backgroundColor: theme.selection,
       }}
     >
-      <text style={{ fg: theme.muted }} content={keybinds} />
       <box style={{ flexDirection: "row", gap: 2 }}>
-        {modeIndicator && <text style={{ fg: theme.diff.addedSign }} content={modeIndicator} />}
-        <text style={{ fg: theme.muted }} content={fileCount} />
+        <text style={{ fg: theme.selectionFg }} content={branch} />
+        <text style={{ fg: theme.selectionFg }} content={fileInfo} />
       </box>
+      {hunkInfo && <text style={{ fg: theme.selectionFg }} content={hunkInfo} />}
     </box>
   )
 }

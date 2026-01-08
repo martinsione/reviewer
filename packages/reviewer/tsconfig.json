@@ -4,7 +4,8 @@
     "outDir": "./dist",
     "rootDir": "./src",
     "jsx": "react-jsx",
-    "jsxImportSource": "@opentui/react"
+    "jsxImportSource": "@opentui/react",
+    "types": ["@types/bun", "@types/react"]
   },
   "include": ["src/**/*"]
 }
