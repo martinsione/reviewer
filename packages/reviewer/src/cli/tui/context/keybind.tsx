@@ -20,6 +20,7 @@ export interface KeybindConfig {
 
   // View
   toggleView: string[]
+  toggleUntracked: string[]
 
   // Commands
   leader: string[]
@@ -46,6 +47,7 @@ const DEFAULT_KEYBINDS: KeybindConfig = {
 
   // View
   toggleView: ["v"],
+  toggleUntracked: ["shift+u"],
 
   // Commands
   leader: ["\\"],

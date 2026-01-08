@@ -59,6 +59,11 @@ export function App({ onExit }: AppProps) {
       git.actions.unstageSelectedHunk()
     }
 
+    // View toggles
+    else if (keybind.match("toggleUntracked", key)) {
+      git.actions.toggleUntracked()
+    }
+
     // Quit
     else if (keybind.match("quit", key)) {
       onExit()

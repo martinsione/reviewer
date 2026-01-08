@@ -1,4 +1,4 @@
-import type { FileDiff, Hunk, HunkLine, DiffOptions } from "./types"
+import type { FileDiff, Hunk, HunkLine, DiffOptions, GetAllDiffsOptions } from "./types"
 
 const DIFF_HEADER_REGEX = /^diff --git a\/(.+) b\/(.+)$/
 const HUNK_HEADER_REGEX = /^@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@/
@@ -11,10 +11,91 @@ export async function getDiff(options: DiffOptions = {}): Promise<FileDiff[]> {
   const result = await Bun.$`git ${args}`.text().catch(() => "")
   if (!result.trim()) return []
 
-  return parseDiff(result)
+  return parseDiff(result, options.staged ?? false)
 }
 
-export function parseDiff(diffText: string): FileDiff[] {
+/** Get all diffs: staged changes + unstaged changes to tracked files + optionally untracked files */
+export async function getAllDiffs(options: GetAllDiffsOptions = {}): Promise<FileDiff[]> {
+  const [staged, unstaged, untracked] = await Promise.all([
+    getDiff({ staged: true }),
+    getDiff({ staged: false }),
+    options.includeUntracked ? getUntrackedFiles() : Promise.resolve([]),
+  ])
+
+  // Merge: staged files, then unstaged files not already in staged, then untracked
+  const fileMap = new Map<string, FileDiff>()
+
+  for (const file of staged) {
+    fileMap.set(file.path, file)
+  }
+
+  for (const file of unstaged) {
+    const existing = fileMap.get(file.path)
+    if (existing) {
+      // File has both staged and unstaged changes - mark it and combine hunks
+      // For now, we show unstaged changes separately
+      fileMap.set(`${file.path}:unstaged`, file)
+    } else {
+      fileMap.set(file.path, file)
+    }
+  }
+
+  for (const file of untracked) {
+    if (!fileMap.has(file.path)) {
+      fileMap.set(file.path, file)
+    }
+  }
+
+  return Array.from(fileMap.values())
+}
+
+/** Get untracked files and generate diff-like content for them */
+async function getUntrackedFiles(): Promise<FileDiff[]> {
+  const result = await Bun.$`git ls-files --others --exclude-standard`.text().catch(() => "")
+  if (!result.trim()) return []
+
+  const files = result.trim().split("\n").filter(Boolean)
+  const diffs: FileDiff[] = []
+
+  for (const filePath of files) {
+    try {
+      const content = await Bun.file(filePath).text()
+      const lines = content.split("\n")
+
+      // Generate diff-like output for the new file
+      const hunkLines: HunkLine[] = lines.map((line, i) => ({
+        type: "add" as const,
+        content: line,
+        newLineNumber: i + 1,
+      }))
+
+      const hunk: Hunk = {
+        index: 0,
+        header: `@@ -0,0 +1,${lines.length} @@`,
+        oldStart: 0,
+        oldLines: 0,
+        newStart: 1,
+        newLines: lines.length,
+        lines: hunkLines,
+        raw: `@@ -0,0 +1,${lines.length} @@\n${lines.map(l => `+${l}`).join("\n")}`,
+      }
+
+      diffs.push({
+        path: filePath,
+        status: "untracked",
+        staged: false,
+        hunks: [hunk],
+        raw: `diff --git a/${filePath} b/${filePath}\nnew file mode 100644\n${hunk.raw}`,
+      })
+    } catch {
+      // Skip files we can't read (binary, permissions, etc.)
+    }
+  }
+
+  return diffs
+}
+
+export function parseDiff(diffText: string, staged: boolean = false): FileDiff[] {
   const files: FileDiff[] = []
   const lines = diffText.split("\n")
   let currentFile: FileDiff | null = null
@@ -41,6 +122,7 @@ export function parseDiff(diffText: string): FileDiff[] {
         path: newPath,
         oldPath: oldPath !== newPath ? oldPath : undefined,
         status: "modified",
+        staged,
         hunks: [],
         raw: line,
       }

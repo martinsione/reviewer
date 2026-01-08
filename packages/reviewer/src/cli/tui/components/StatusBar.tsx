@@ -10,11 +10,13 @@ export function StatusBar() {
   const keybinds = [
     `${keybind.print("prevFile")}/${keybind.print("nextFile")} nav`,
     `${keybind.print("toggleStage")} stage`,
+    `${keybind.print("toggleUntracked")} untracked`,
     `${keybind.print("quit")} quit`,
     `${keybind.print("help")} help`,
   ].join("  ")
 
   const fileCount = `${state.files.length} file${state.files.length !== 1 ? "s" : ""}`
+  const modeIndicator = state.showUntracked ? "[+untracked]" : ""
 
   return (
     <box
@@ -31,7 +33,10 @@ export function StatusBar() {
       }}
     >
       <text style={{ fg: theme.muted }} content={keybinds} />
-      <text style={{ fg: theme.muted }} content={fileCount} />
+      <box style={{ flexDirection: "row", gap: 2 }}>
+        {modeIndicator && <text style={{ fg: theme.diff.addedSign }} content={modeIndicator} />}
+        <text style={{ fg: theme.muted }} content={fileCount} />
+      </box>
     </box>
   )
 }

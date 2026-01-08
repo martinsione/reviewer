@@ -63,21 +63,24 @@ export function FileList({ width }: FileListProps) {
           const isSelected = index === state.selectedFileIndex
           const statusIcon =
             file.status === "added"
-              ? "+"
+              ? "A"
               : file.status === "deleted"
-                ? "-"
+                ? "D"
                 : file.status === "renamed"
                   ? "R"
-                  : "M"
+                  : file.status === "untracked"
+                    ? "?"
+                    : "M"
+          const stagedIcon = file.staged ? "S" : " "
           const statusColor =
-            file.status === "added"
+            file.status === "added" || file.status === "untracked"
               ? theme.diff.addedSign
               : file.status === "deleted"
                 ? theme.diff.removedSign
                 : theme.foreground
 
-          // Truncate filename to fit
-          const maxLen = width - 6
+          // Truncate filename to fit (account for status icons: "SA ")
+          const maxLen = width - 7
           const name =
             file.path.length > maxLen
               ? "..." + file.path.slice(-(maxLen - 3))
@@ -85,13 +88,17 @@ export function FileList({ width }: FileListProps) {
 
           return (
             <box
-              key={file.path}
+              key={file.path + (file.staged ? ":staged" : "")}
               style={{
                 height: 1,
                 backgroundColor: isSelected ? theme.selection : "transparent",
                 flexDirection: "row",
               }}
             >
+              <text
+                style={{ fg: file.staged ? theme.diff.addedSign : theme.muted, width: 1 }}
+                content={stagedIcon}
+              />
               <text
                 style={{ fg: statusColor, width: 2 }}
                 content={statusIcon}

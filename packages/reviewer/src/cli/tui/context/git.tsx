@@ -8,7 +8,7 @@ import {
   type ReactNode,
 } from "react"
 import type { FileDiff, Hunk } from "@reviewer/core"
-import { getDiff, stageHunk, unstageHunk } from "@reviewer/core"
+import { getAllDiffs, stageHunk, unstageHunk } from "@reviewer/core"
 import type { TuiOptions } from "../bootstrap"
 
 interface GitState {
@@ -16,6 +16,7 @@ interface GitState {
   selectedFileIndex: number
   selectedHunkIndex: number
   stagedHunks: Set<string> // "filepath:hunkIndex"
+  showUntracked: boolean
   loading: boolean
   error: string | null
 }
@@ -28,6 +29,7 @@ interface GitContextValue {
     toggleHunkStage: () => Promise<void>
     stageSelectedHunk: () => Promise<void>
     unstageSelectedHunk: () => Promise<void>
+    toggleUntracked: () => void
     refresh: () => Promise<void>
   }
   computed: {
@@ -57,14 +59,17 @@ export function GitProvider({ children, options }: GitProviderProps) {
     selectedFileIndex: 0,
     selectedHunkIndex: 0,
     stagedHunks: new Set(),
+    showUntracked: false,
     loading: true,
     error: null,
   })
 
-  const refresh = useCallback(async () => {
-    setState((s) => ({ ...s, loading: true, error: null }))
+  const doRefresh = useCallback(async (includeUntracked: boolean, showLoading = true) => {
+    if (showLoading) {
+      setState((s) => ({ ...s, loading: true, error: null }))
+    }
     try {
-      const files = await getDiff({ staged: options.staged })
+      const files = await getAllDiffs({ includeUntracked })
       setState((s) => ({
         ...s,
         files,
@@ -79,11 +84,16 @@ export function GitProvider({ children, options }: GitProviderProps) {
         error: err instanceof Error ? err.message : "Unknown error",
       }))
     }
-  }, [options.staged])
+  }, [])
 
+  // Initial load only
   useEffect(() => {
-    refresh()
-  }, [refresh])
+    doRefresh(false, true)
+  }, [doRefresh])
+
+  const refresh = useCallback(async () => {
+    await doRefresh(state.showUntracked, true)
+  }, [doRefresh, state.showUntracked])
 
   const selectFile = useCallback((index: number) => {
     setState((s) => {
@@ -141,6 +151,15 @@ export function GitProvider({ children, options }: GitProviderProps) {
     await stageSelectedHunk()
   }, [stageSelectedHunk])
 
+  const toggleUntracked = useCallback(() => {
+    setState((s) => {
+      const newShowUntracked = !s.showUntracked
+      // Trigger refresh with new value, don't show loading to avoid flicker
+      doRefresh(newShowUntracked, false)
+      return { ...s, showUntracked: newShowUntracked }
+    })
+  }, [doRefresh])
+
   const computed = useMemo(() => {
     const currentFile = state.files[state.selectedFileIndex] ?? null
     const currentHunk = currentFile?.hunks[state.selectedHunkIndex] ?? null
@@ -160,9 +179,10 @@ export function GitProvider({ children, options }: GitProviderProps) {
       toggleHunkStage,
       stageSelectedHunk,
       unstageSelectedHunk,
+      toggleUntracked,
       refresh,
     }),
-    [selectFile, selectHunk, toggleHunkStage, stageSelectedHunk, unstageSelectedHunk, refresh]
+    [selectFile, selectHunk, toggleHunkStage, stageSelectedHunk, unstageSelectedHunk, toggleUntracked, refresh]
   )
 
   return (
