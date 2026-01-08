@@ -1,0 +1,4 @@
+# Files to copy to new worktrees (supports glob patterns)
+# Lines starting with # are comments
+
+.claude/settings.local.json
