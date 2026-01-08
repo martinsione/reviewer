@@ -14,6 +14,10 @@ export async function tui(options: TuiOptions): Promise<void> {
   const renderer = await createCliRenderer({
     exitOnCtrlC: false,
     targetFps: 60,
+    useKittyKeyboard: {
+      disambiguate: true,
+      alternateKeys: true,
+    },
   })
 
   renderer.setBackgroundColor("#0D1117")

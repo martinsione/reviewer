@@ -5,10 +5,11 @@ import {
   useCallback,
   useMemo,
   useEffect,
+  useRef,
   type ReactNode,
 } from "react"
 import type { FileDiff, Hunk } from "@reviewer/core"
-import { getAllDiffs, stageHunk, unstageHunk } from "@reviewer/core"
+import { getAllDiffs, stageHunk, unstageHunk, getBranch } from "@reviewer/core"
 import type { TuiOptions } from "../bootstrap"
 
 interface GitState {
@@ -19,6 +20,7 @@ interface GitState {
   showUntracked: boolean
   loading: boolean
   error: string | null
+  branch: string
 }
 
 interface GitContextValue {
@@ -62,6 +64,7 @@ export function GitProvider({ children, options }: GitProviderProps) {
     showUntracked: false,
     loading: true,
     error: null,
+    branch: "",
   })
 
   const doRefresh = useCallback(async (includeUntracked: boolean, showLoading = true) => {
@@ -69,10 +72,14 @@ export function GitProvider({ children, options }: GitProviderProps) {
       setState((s) => ({ ...s, loading: true, error: null }))
     }
     try {
-      const files = await getAllDiffs({ includeUntracked })
+      const [files, branch] = await Promise.all([
+        getAllDiffs({ includeUntracked }),
+        getBranch(),
+      ])
       setState((s) => ({
         ...s,
         files,
+        branch,
         loading: false,
         selectedFileIndex: Math.min(s.selectedFileIndex, Math.max(0, files.length - 1)),
         selectedHunkIndex: 0,
@@ -86,10 +93,38 @@ export function GitProvider({ children, options }: GitProviderProps) {
     }
   }, [])
 
-  // Initial load only
+  // Initial load - use a module-level flag to prevent duplicate loads from Strict Mode
+  const hasLoadedRef = useRef(false)
+
   useEffect(() => {
-    doRefresh(false, true)
-  }, [doRefresh])
+    if (hasLoadedRef.current) return
+    hasLoadedRef.current = true
+
+    const load = async () => {
+      try {
+        const [files, branch] = await Promise.all([
+          getAllDiffs({ includeUntracked: false }),
+          getBranch(),
+        ])
+        setState((s) => ({
+          ...s,
+          files,
+          branch,
+          loading: false,
+          selectedFileIndex: Math.min(s.selectedFileIndex, Math.max(0, files.length - 1)),
+          selectedHunkIndex: 0,
+        }))
+      } catch (err) {
+        setState((s) => ({
+          ...s,
+          loading: false,
+          error: err instanceof Error ? err.message : "Unknown error",
+        }))
+      }
+    }
+
+    load()
+  }, [])
 
   const refresh = useCallback(async () => {
     await doRefresh(state.showUntracked, true)

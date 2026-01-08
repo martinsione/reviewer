@@ -2,7 +2,6 @@ import { useTerminalDimensions, useKeyboard } from "@opentui/react"
 import { useGit } from "./context/git"
 import { useKeybind } from "./context/keybind"
 import { useTheme } from "./context/theme"
-import { Header } from "./components/Header"
 import { FileList } from "./components/FileList"
 import { DiffView } from "./components/DiffView"
 import { StatusBar } from "./components/StatusBar"
@@ -79,7 +78,6 @@ export function App({ onExit }: AppProps) {
         flexDirection: "column",
       }}
     >
-      <Header />
       <box style={{ flexDirection: "row", flexGrow: 1, flexShrink: 1 }}>
         <FileList width={30} />
         <DiffView />

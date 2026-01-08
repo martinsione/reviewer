@@ -78,19 +78,30 @@ function matchKey(bindings: string[], key: KeyEvent): boolean {
     const mods = parts
 
     const targetKey = keyName === "space" ? " " : keyName
-    if (key.name?.toLowerCase() !== targetKey && key.raw !== targetKey) continue
-
     const ctrl = mods.includes("ctrl")
     const shift = mods.includes("shift")
-    const alt = mods.includes("alt")
     const meta = mods.includes("meta") || mods.includes("cmd")
 
-    if (
+    // Check if modifiers match
+    const modifiersMatch =
       (key.ctrl || false) === ctrl &&
       (key.shift || false) === shift &&
       (key.meta || false) === meta
-    ) {
+
+    if (!modifiersMatch) continue
+
+    // Direct name/raw match
+    if (key.name?.toLowerCase() === targetKey || key.raw === targetKey) {
       return true
+    }
+
+    // Handle ctrl+letter: in terminals, ctrl+a through ctrl+z produce ASCII 1-26
+    // Check if the raw character matches the expected control character
+    if (ctrl && targetKey.length === 1 && targetKey >= "a" && targetKey <= "z") {
+      const expectedCharCode = targetKey.charCodeAt(0) - "a".charCodeAt(0) + 1
+      if (key.raw?.charCodeAt(0) === expectedCharCode) {
+        return true
+      }
     }
   }
   return false
